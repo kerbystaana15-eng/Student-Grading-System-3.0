@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Grading System</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            display: none; /* Hidden by default, toggled via JS */
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        /* Login Form Styles */
+        .login-box {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logout-btn {
+            width: auto;
+            background-color: var(--text-muted);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #F9FAFB;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        tr:hover {
+            background-color: #F9FAFB;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btns button {
+            width: auto;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Add Grade Form (Teacher) */
+        .crud-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+            background: #F9FAFB;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .crud-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginView" class="container active login-box">
+        <h2>System Login</h2>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="teacher / student">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="pass123">
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
+            Demo Credentials:<br>
+            Teacher: <b>teacher</b> | Pass: <b>pass123</b><br>
+            Student: <b>student</b> | Pass: <b>pass123</b>
+        </p>
+        <button onclick="handleLogin()">Login</button>
+        <p id="loginError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></p>
+    </div>
+
+    <div id="teacherView" class="container">
+        <div class="header-actions">
+            <h2>Teacher Dashboard</h2>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="crud-form">
+            <input type="hidden" id="editId">
+            <div class="form-group" style="margin: 0;">
+                <label>Student Name</label>
+                <input type="text" id="studentName" placeholder="e.g. John Doe">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label>Subject</label>
+                <input type="text" id="subject" placeholder="e.g. Strategic Management">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label>Grade</label>
+                <input type="text" id="grade" placeholder="A, B, 95, etc.">
+            </div>
+            <button onclick="saveGrade()" id="saveBtn">Add Grade</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Subject</th>
+                    <th>Grade</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="teacherTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <div id="studentView" class="container">
+        <div class="header-actions">
+            <h2 id="studentWelcome">Student Dashboard</h2>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Subject</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'firebase/app';
+        import { getAnalytics } from 'firebase/analytics';
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            updateDoc,
+            deleteDoc,
+            setDoc,
+            doc,
+            onSnapshot,
+            query,
+            orderBy,
+            serverTimestamp
+        } from 'firebase/firestore';
+
+        const firebaseConfig = {
+            apiKey: 'AIzaSyB2uf4PVlPC8IhII203GSLJqLsC4tQm-oM',
+            authDomain: 'sgsdatabase-22111.firebaseapp.com',
+            projectId: 'sgsdatabase-22111',
+            storageBucket: 'sgsdatabase-22111.firebasestorage.app',
+            messagingSenderId: '250207596316',
+            appId: '1:250207596316:web:cfbef69ce22a20019fd4d9',
+            measurementId: 'G-4TYHT2F1G6'
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let grades = [];
+        let gradesUnsubscribe = null;
+
+        function normalizeStudentName(value) {
+            return value.trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('gradesData', JSON.stringify(grades));
+        }
+
+        async function logLoginActivity(username, role, success) {
+            try {
+                await addDoc(collection(db, 'loginLogs'), {
+                    username: username || 'unknown',
+                    role,
+                    success,
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error('Unable to save login activity:', error);
+            }
+        }
+
+        function listenToGrades() {
+            if (gradesUnsubscribe) {
+                gradesUnsubscribe();
+            }
+
+            const gradesQuery = query(collection(db, 'grades'), orderBy('createdAt', 'asc'));
+            gradesUnsubscribe = onSnapshot(
+                gradesQuery,
+                (snapshot) => {
+                    grades = snapshot.docs.map((document) => ({
+                        id: document.id,
+                        ...document.data()
+                    }));
+                    saveToStorage();
+
+                    if (currentUser?.role === 'teacher') {
+                        renderTeacherTable();
+                    } else if (currentUser?.role === 'student') {
+                        renderStudentTable();
+                    }
+                },
+                (error) => {
+                    console.error('Unable to load grades:', error);
+                    grades = JSON.parse(localStorage.getItem('gradesData') || '[]');
+                    if (currentUser?.role === 'teacher') {
+                        renderTeacherTable();
+                    } else if (currentUser?.role === 'student') {
+                        renderStudentTable();
+                    }
+                }
+            );
+        }
+
+        async function handleLogin() {
+            const rawUser = document.getElementById('username').value.trim();
+            const user = normalizeStudentName(rawUser);
+            const pass = document.getElementById('password').value;
+            const errorElement = document.getElementById('loginError');
+
+            if (pass !== 'pass123') {
+                errorElement.innerText = "Invalid password. Use 'pass123'.";
+                await logLoginActivity(user, 'unknown', false);
+                return;
+            }
+
+            if (user === 'teacher') {
+                currentUser = { role: 'teacher', name: 'Teacher' };
+                await logLoginActivity(user, 'teacher', true);
+                switchView('teacherView');
+                renderTeacherTable();
+            } else if (user) {
+                currentUser = { role: 'student', name: user, displayName: rawUser };
+                await logLoginActivity(user, 'student', true);
+                document.getElementById('studentWelcome').innerText = `Welcome, ${rawUser}!`;
+                switchView('studentView');
+                renderStudentTable();
+            } else {
+                errorElement.innerText = 'Please enter a username.';
+                await logLoginActivity(user, 'unknown', false);
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginError').innerText = '';
+            switchView('loginView');
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.container').forEach((el) => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function renderTeacherTable() {
+            const tbody = document.getElementById('teacherTableBody');
+            tbody.innerHTML = '';
+
+            grades.forEach((g) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${g.studentDisplayName || g.studentName}</td>
+                    <td>${g.subject}</td>
+                    <td><strong>${g.grade}</strong></td>
+                    <td class="action-btns">
+                        <button onclick="editGrade('${g.id}')" style="background-color: #F59E0B;">Edit</button>
+                        <button onclick="deleteGrade('${g.id}')" class="btn-danger">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function saveGrade() {
+            const idInput = document.getElementById('editId').value;
+            const rawStudentName = document.getElementById('studentName').value.trim();
+            const studentName = normalizeStudentName(rawStudentName);
+            const subject = document.getElementById('subject').value.trim();
+            const grade = document.getElementById('grade').value.trim();
+
+            if (!studentName || !subject || !grade) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            try {
+                await setDoc(doc(db, 'students', studentName), {
+                    username: studentName,
+                    displayName: rawStudentName || studentName,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+
+                if (idInput) {
+                    await updateDoc(doc(db, 'grades', idInput), {
+                        studentName,
+                        studentDisplayName: rawStudentName || studentName,
+                        subject,
+                        grade,
+                        updatedAt: serverTimestamp()
+                    });
+                    document.getElementById('saveBtn').innerText = 'Add Grade';
+                } else {
+                    await addDoc(collection(db, 'grades'), {
+                        studentName,
+                        studentDisplayName: rawStudentName || studentName,
+                        subject,
+                        grade,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    });
+                }
+
+                clearForm();
+            } catch (error) {
+                console.error('Unable to save grade:', error);
+                alert('Unable to save grade. Please try again.');
+            }
+        }
+
+        function editGrade(id) {
+            const gradeObj = grades.find((g) => g.id === id);
+            if (gradeObj) {
+                document.getElementById('editId').value = gradeObj.id;
+                document.getElementById('studentName').value = gradeObj.studentName;
+                document.getElementById('subject').value = gradeObj.subject;
+                document.getElementById('grade').value = gradeObj.grade;
+                document.getElementById('saveBtn').innerText = 'Update Grade';
+            }
+        }
+
+        async function deleteGrade(id) {
+            if (confirm('Are you sure you want to delete this grade?')) {
+                try {
+                    await deleteDoc(doc(db, 'grades', id));
+                } catch (error) {
+                    console.error('Unable to delete grade:', error);
+                    alert('Unable to delete grade. Please try again.');
+                }
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('editId').value = '';
+            document.getElementById('studentName').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('grade').value = '';
+            document.getElementById('saveBtn').innerText = 'Add Grade';
+        }
+
+        function renderStudentTable() {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+
+            if (!currentUser) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Please log in to view your grades.</td></tr>';
+                return;
+            }
+
+            if (grades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">No grades found yet.</td></tr>';
+                return;
+            }
+
+            grades.forEach((g) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `                    <td>${g.studentDisplayName || g.studentName || g.username || 'Unknown'}</td>                    <td>${g.subject}</td>
+                    <td><strong>${g.grade}</strong></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        listenToGrades();
+
+        window.handleLogin = handleLogin;
+        window.logout = logout;
+        window.saveGrade = saveGrade;
+        window.editGrade = editGrade;
+        window.deleteGrade = deleteGrade;
+    </script>
+</body>
+</html>
